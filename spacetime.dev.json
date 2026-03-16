@@ -1,0 +1,6 @@
+{
+  "server": "local",
+  "dev": {
+    "run": "npm run dev -- --mode development"
+  }
+}

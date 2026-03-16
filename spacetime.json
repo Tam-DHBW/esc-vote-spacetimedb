@@ -1,0 +1,8 @@
+{
+  "module-path": "./spacetimedb",
+  "database": "esc-vote-e5z2o",
+  "server": "maincloud",
+  "dev": {
+    "run": "npm run dev -- --mode production"
+  }
+}
