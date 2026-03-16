@@ -132,6 +132,23 @@ With 37 participating countries + the "Rest of the World" vote:
 
 ---
 
+## How Votes Are Cast
+
+### Jurors
+
+Each juror individually **ranks all performing songs** (excluding their own country) from best to worst. They assess performances on four criteria: overall impression, composition and originality, vocal ability, and staging. The 5 individual rankings per country are then aggregated using an exponential weight model into a single national jury ranking, and the top 10 receive points (12, 10, 8, 7, 6, 5, 4, 3, 2, 1).
+
+### Televoters (Public / Rest of the World)
+
+Viewers vote via phone, SMS, or the official app. Each viewer has a budget of **20 votes**. The app presents all performing countries, and the viewer taps a country to give it +1 vote. The same country can be tapped multiple times. Votes can be distributed however the viewer likes — all 20 to one country, or spread across several. There is no ranking involved; each vote simply adds +1 to that song's tally. All votes from a country are then tallied into a ranking, and the top 10 receive points on the same scale.
+
+### Key Difference
+
+- Jurors: **full ranking** of all songs (ordered list)
+- Televoters: **pick favourites** (up to 20 unordered votes)
+
+---
+
 ## Summary Table
 
 | Aspect              | Semi-Finals              | Grand Final                        |
