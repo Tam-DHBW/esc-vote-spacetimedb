@@ -7,7 +7,7 @@ function Home() {
   const [[voter], ready] = useTable(tables.current_voter);
   const [countries] = useTable(tables.country);
 
-  if (!ready) return <p>Loading…</p>;
+  if (!ready) return <p className="p-8 text-neutral-400">Loading…</p>;
   if (!voter) return <Navigate to="/register" />;
 
   const { role } = voter;
@@ -16,16 +16,20 @@ function Home() {
     countryId != null ? countries.find((c) => c.id === countryId) : null;
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>ESC Vote</h1>
-      <p>
-        Role: {role.tag === "Juror" ? `Juror (${role.value.name})` : role.tag}
-      </p>
-      {country && (
+    <div className="mx-auto max-w-lg p-8">
+      <h1 className="mb-6 text-3xl font-bold">ESC Vote</h1>
+      <div className="space-y-2 rounded-lg bg-neutral-800 p-6">
         <p>
-          Country: {country.name} ({country.code})
+          <span className="text-neutral-400">Role:</span>{" "}
+          {role.tag === "Juror" ? `Juror (${role.value.name})` : role.tag}
         </p>
-      )}
+        {country && (
+          <p>
+            <span className="text-neutral-400">Country:</span> {country.name} (
+            {country.code})
+          </p>
+        )}
+      </div>
     </div>
   );
 }

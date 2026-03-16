@@ -33,14 +33,18 @@ export default function Register() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "400px", margin: "0 auto" }}>
-      <h1>ESC Vote — Register</h1>
-      {!ready && <p>Loading…</p>}
-      {!connected && <p>Connecting…</p>}
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "1rem" }}>
-          <label htmlFor="country">Country</label>
-          <br />
+    <div className="mx-auto max-w-md p-8">
+      <h1 className="mb-6 text-3xl font-bold">ESC Vote — Register</h1>
+      {!ready && <p className="text-neutral-400">Loading…</p>}
+      {!connected && <p className="text-neutral-400">Connecting…</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label
+            htmlFor="country"
+            className="mb-1 block text-sm text-neutral-400"
+          >
+            Country
+          </label>
           <select
             id="country"
             value={countryId?.toString() ?? ""}
@@ -50,7 +54,7 @@ export default function Register() {
               if (!val) setIsJuror(false);
             }}
             disabled={!connected}
-            style={{ width: "100%", padding: "0.5rem" }}
+            className="w-full rounded-lg bg-neutral-800 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">None (Rest of the World)</option>
             {countries.map((c) => (
@@ -62,22 +66,25 @@ export default function Register() {
         </div>
 
         {countryId != null && (
-          <div style={{ marginBottom: "1rem" }}>
-            <label>
-              <input
-                type="checkbox"
-                checked={isJuror}
-                onChange={(e) => setIsJuror(e.target.checked)}
-              />{" "}
-              I am a juror
-            </label>
-          </div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isJuror}
+              onChange={(e) => setIsJuror(e.target.checked)}
+              className="rounded"
+            />
+            I am a juror
+          </label>
         )}
 
         {isJuror && (
-          <div style={{ marginBottom: "1rem" }}>
-            <label htmlFor="name">Name</label>
-            <br />
+          <div>
+            <label
+              htmlFor="name"
+              className="mb-1 block text-sm text-neutral-400"
+            >
+              Name
+            </label>
             <input
               id="name"
               type="text"
@@ -85,7 +92,7 @@ export default function Register() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               required
-              style={{ width: "100%", padding: "0.5rem" }}
+              className="w-full rounded-lg bg-neutral-800 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         )}
@@ -93,7 +100,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={!connected}
-          style={{ padding: "0.5rem 1rem" }}
+          className="rounded-lg bg-blue-600 px-4 py-2 font-medium transition hover:bg-blue-500 disabled:opacity-50"
         >
           Register
         </button>
