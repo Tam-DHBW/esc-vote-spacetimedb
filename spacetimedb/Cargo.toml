@@ -10,5 +10,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 spacetimedb = { version = "2.0.3" }
+spacetimedsl = "0.19.1"
+preinterpret = "0.2"
+respan = "0.1.6"
+macro_rules_attribute = "0.2.2"
 log = "0.4"
-spacetimedsl = "0.18.1"

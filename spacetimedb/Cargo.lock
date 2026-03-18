@@ -203,6 +203,9 @@ name = "esc_vote"
 version = "0.1.0"
 dependencies = [
  "log",
+ "macro_rules_attribute",
+ "preinterpret",
+ "respan",
  "spacetimedb",
  "spacetimedsl",
 ]
@@ -410,6 +413,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "macro_rules_attribute"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65049d7923698040cd0b1ddcced9b0eb14dd22c5f86ae59c3740eab64a676520"
+dependencies = [
+ "macro_rules_attribute-proc_macro",
+ "paste",
+]
+
+[[package]]
+name = "macro_rules_attribute-proc_macro"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "670fdfda89751bc4a84ac13eaa63e205cf0fd22b4c9a5fbfa085b63c1f1d3a30"
+
+[[package]]
 name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -431,12 +450,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
+]
+
+[[package]]
+name = "preinterpret"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4961bbd9cb921c326a3c2c288448f3e6da4074ba4f7eff122cbc6ccac6c5751d"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -547,6 +582,12 @@ checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
 dependencies = [
  "getrandom 0.3.4",
 ]
+
+[[package]]
+name = "respan"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cc67f81f36c7b6f01585478bdae1238213f0e9825c6a9d0cd9644830120b122"
 
 [[package]]
 name = "rust-format"
@@ -794,9 +835,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedsl"
-version = "0.18.1"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd4a1cd60ea9415324b1fd35683089be974d72c3e7d3ec966c1754175da0a2dc"
+checksum = "96e27db67e5ca875daf9e026da2810ad097dedfbe137c7d1854ed1c3d0231e6a"
 dependencies = [
  "itertools 0.14.0",
  "spacetimedb",
@@ -805,9 +846,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedsl_derive"
-version = "0.18.1"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa3bd769f91a083a7934bb23e0fa7840ac4c203148ad0815df8c0ff6776c9cee"
+checksum = "8843d7f0099f31c55f60b26c948b882ea416244f1de36c3b67cc7455b879a91d"
 dependencies = [
  "ident_case",
  "proc-macro2",
@@ -819,9 +860,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedsl_derive-input"
-version = "0.18.1"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b02ef9ab8d745aaf3a0ca194794a7368e8048a9ad2e21f962157e4440426891e"
+checksum = "6fdcfe67383cd758755a5a056067f09c0d94a1b53cf20a9db88fbba8202375e8"
 dependencies = [
  "ident_case",
  "itertools 0.14.0",
