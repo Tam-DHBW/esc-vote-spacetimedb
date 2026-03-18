@@ -1,5 +1,5 @@
 use spacetimedb::{reducer, table, view, Identity, ReducerContext, SpacetimeType, ViewContext};
-use spacetimedsl::{dsl, Wrapper};
+use spacetimedsl::dsl;
 
 use crate::country::{CountryId, GetCountryRowOptionById};
 
@@ -124,20 +124,22 @@ pub fn register(ctx: &ReducerContext, role: VoterRole) -> Result<(), String> {
 
 #[view(accessor = current_voter, public)]
 fn current_voter(ctx: &ViewContext) -> Option<CurrentVoter> {
-    let voter = ctx.db.voter().identity().find(&ctx.sender())?;
-    let rep = ctx.db.rep().voter_id().find(&voter.id);
+    let dsl = spacetimedsl::read_only_dsl(ctx);
+
+    let voter = dsl.get_voter_by_identity(&ctx.sender()).ok()?;
+    let rep = dsl.get_rep_by_voter_id(voter.get_id()).ok();
 
     let role = match rep {
         None => VoterRole::World,
 
-        Some(rep) => match ctx.db.juror().rep_id().find(&rep.id) {
-            Some(juror) => VoterRole::Juror(JurorInfo {
-                country_id: CountryId::new(rep.country_id),
-                name: juror.name,
+        Some(rep) => match dsl.get_juror_by_rep_id(rep.get_id()).ok() {
+            None => VoterRole::Rep(RepInfo {
+                country_id: rep.get_country_id().clone(),
             }),
 
-            None => VoterRole::Rep(RepInfo {
-                country_id: CountryId::new(rep.country_id),
+            Some(juror) => VoterRole::Juror(JurorInfo {
+                country_id: rep.get_country_id().clone(),
+                name: juror.get_name().clone(),
             }),
         },
     };
