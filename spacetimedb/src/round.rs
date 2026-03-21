@@ -1,4 +1,3 @@
-use macro_rules_attribute::apply;
 use spacetimedb::{SpacetimeType, ViewContext};
 use spacetimedsl::dsl;
 
@@ -38,19 +37,18 @@ pub struct Round {
     countries: Vec<CountryId>,
 }
 
-#[apply(crate::singleton!)]
-#[spacetimedsl::dsl(plural_name = active_rounds, method(update = false, delete = true))]
-#[spacetimedb::table(accessor = active_round, public)]
+#[spacetimedsl::dsl(singleton, method(update = false, delete = true))]
+#[spacetimedb::table(accessor = active_round)]
 pub struct ActiveRound {
-    #[use_wrapper(RoundId)]
-    #[index(btree)]
     #[foreign_key(path=crate::round, table=round, column = id, on_delete = Delete)]
+    #[use_wrapper(RoundId)]
     round_id: u16,
 }
 
-#[spacetimedb::view(accessor = active_round_view, public)]
-fn active_round_view(ctx: &ViewContext) -> Option<ActiveRound> {
+#[spacetimedb::view(accessor = active_round, public)]
+fn active_round_view(ctx: &ViewContext) -> Option<Round> {
     let dsl = spacetimedsl::read_only_dsl(ctx);
 
-    dsl.get_active_round_by_singleton(()).ok()
+    let round_id = dsl.get_active_round().ok()?.get_round_id();
+    dsl.get_round_by_id(round_id).ok()
 }

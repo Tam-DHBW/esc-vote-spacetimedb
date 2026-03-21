@@ -3,7 +3,7 @@ use spacetimedsl::dsl;
 
 use crate::{
     country::CountryId,
-    round::GetActiveRoundRowOptionBySingleton,
+    round::GetActiveRoundRow,
     voter::{GetJurorRowOptionByRepId, GetRepRowOptionByVoterId, GetVoterRowOptionByIdentity},
 };
 
@@ -76,7 +76,7 @@ fn submit_tele_votes(ctx: &ReducerContext, votes: Vec<CountryId>) -> Result<(), 
         return Err(format!("You can only submit {AVAILABLE_TELE_VOTES} votes"));
     }
 
-    let round = dsl.get_active_round_by_singleton(())?;
+    let round = dsl.get_active_round()?;
     let voter = dsl.get_voter_by_identity(&ctx.sender())?;
 
     dsl.delete_tele_votes_by_voter_id(&voter)?;
@@ -96,7 +96,7 @@ fn submit_tele_votes(ctx: &ReducerContext, votes: Vec<CountryId>) -> Result<(), 
 fn submit_juror_votes(ctx: &ReducerContext, ranking: Vec<CountryId>) -> Result<(), String> {
     let dsl = spacetimedsl::dsl(ctx);
 
-    let round = dsl.get_active_round_by_singleton(())?;
+    let round = dsl.get_active_round()?;
     let voter = dsl.get_voter_by_identity(&ctx.sender())?;
     let rep = dsl.get_rep_by_voter_id(voter.get_id())?;
     let juror = dsl.get_juror_by_rep_id(rep.get_id())?;
