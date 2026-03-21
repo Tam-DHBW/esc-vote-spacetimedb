@@ -5,6 +5,8 @@ pub struct Country {
     #[auto_inc]
     #[create_wrapper]
     #[referenced_by(path = crate::voter, table = rep)]
+    #[referenced_by(path = crate::vote, table = tele_vote)]
+    #[referenced_by(path = crate::vote, table = juror_vote)]
     id: u16,
 
     name: String,

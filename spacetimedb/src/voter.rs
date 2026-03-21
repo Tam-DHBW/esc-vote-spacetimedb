@@ -20,6 +20,7 @@ pub struct Voter {
     #[auto_inc]
     #[create_wrapper]
     #[referenced_by(path = crate::voter, table = rep)]
+    #[referenced_by(path = crate::vote, table = tele_vote)]
     id: u64,
 
     #[unique]
@@ -56,6 +57,7 @@ pub struct Juror {
     #[primary_key]
     #[auto_inc]
     #[create_wrapper]
+    #[referenced_by(path = crate::vote, table = juror_vote)]
     id: u64,
 
     #[unique]

@@ -26,6 +26,8 @@ pub struct Round {
     #[primary_key]
     #[auto_inc]
     #[create_wrapper]
+    #[referenced_by(path = crate::vote, table = tele_vote)]
+    #[referenced_by(path = crate::vote, table = juror_vote)]
     #[referenced_by(path = crate::round, table = active_round)]
     id: u16,
 
