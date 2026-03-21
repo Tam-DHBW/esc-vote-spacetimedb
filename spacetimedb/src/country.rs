@@ -1,4 +1,4 @@
-#[spacetimedsl::dsl(plural_name = countries, method(update = true, delete = true))]
+#[spacetimedsl::dsl(plural_name = countries, method(update = false, delete = false))]
 #[spacetimedb::table(accessor = country, public)]
 pub struct Country {
     #[primary_key]

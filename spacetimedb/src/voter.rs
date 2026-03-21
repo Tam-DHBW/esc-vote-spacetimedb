@@ -1,7 +1,6 @@
-use spacetimedb::{reducer, table, view, Identity, ReducerContext, SpacetimeType, ViewContext};
-use spacetimedsl::dsl;
+use spacetimedb::{Identity, ReducerContext, SpacetimeType, ViewContext};
 
-use crate::country::{CountryId, GetCountryRowOptionById};
+use crate::country::CountryId;
 
 impl VoterRole {
     fn country_id(&self) -> Option<&CountryId> {
@@ -14,8 +13,8 @@ impl VoterRole {
 }
 
 /// Any kind of voter: rest-of-the-world, country representative, or country juror.
-#[dsl(plural_name = voters, method(update = false))]
-#[table(accessor = voter)]
+#[spacetimedsl::dsl(plural_name = voters, method(update = false))]
+#[spacetimedb::table(accessor = voter)]
 pub struct Voter {
     #[primary_key]
     #[auto_inc]
@@ -29,8 +28,8 @@ pub struct Voter {
 }
 
 /// Voter representing a participating country.
-#[dsl(plural_name = reps, method(update = false, delete = true))]
-#[table(accessor = rep)]
+#[spacetimedsl::dsl(plural_name = reps, method(update = false, delete = true))]
+#[spacetimedb::table(accessor = rep)]
 pub struct Rep {
     #[primary_key]
     #[auto_inc]
@@ -51,8 +50,8 @@ pub struct Rep {
 }
 
 /// Jury member of a participating country.
-#[dsl(plural_name = jurors, method(update = false, delete = true))]
-#[table(accessor = juror)]
+#[spacetimedsl::dsl(plural_name = jurors, method(update = false, delete = true))]
+#[spacetimedb::table(accessor = juror)]
 pub struct Juror {
     #[primary_key]
     #[auto_inc]
@@ -91,7 +90,7 @@ pub struct CurrentVoter {
     pub role: VoterRole,
 }
 
-#[reducer]
+#[spacetimedb::reducer]
 pub fn register(ctx: &ReducerContext, role: VoterRole) -> Result<(), String> {
     let dsl = spacetimedsl::dsl(ctx);
 
@@ -104,8 +103,6 @@ pub fn register(ctx: &ReducerContext, role: VoterRole) -> Result<(), String> {
     })?;
 
     if let Some(country_id) = role.country_id() {
-        dsl.get_country_by_id(country_id)?;
-
         let rep = dsl.create_rep(CreateRep {
             voter_id: voter.get_id().clone(),
             country_id: country_id.clone(),
@@ -122,7 +119,7 @@ pub fn register(ctx: &ReducerContext, role: VoterRole) -> Result<(), String> {
     Ok(())
 }
 
-#[view(accessor = current_voter, public)]
+#[spacetimedb::view(accessor = current_voter, public)]
 fn current_voter(ctx: &ViewContext) -> Option<CurrentVoter> {
     let dsl = spacetimedsl::read_only_dsl(ctx);
 

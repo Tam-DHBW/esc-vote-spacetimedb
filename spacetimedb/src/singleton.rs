@@ -29,7 +29,7 @@ macro_rules! _singleton {
     (accessor{ $($full:tt)* }{ ( $_:meta $(, $($args:tt)*)? ) }) => { $crate::_singleton!(accessor{ $($full)* }{ ( $($($args)*)? ) }); };
     (accessor$_:tt$__:tt) => { compile_error!("Missing `accessor` table parameter"); };
 
-    (table{ $(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* } }) => { 
+    (table{ $(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* } }) => {
         ::respan::call_site! {
             $(#[$meta])*
             $vis struct $name {
