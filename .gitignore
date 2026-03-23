@@ -1,6 +1,8 @@
 target/
+dist/
 node_modules/
+src/module_bindings/
 .env.local
 spacetime.local.json
 
-src/module_bindings/
+*.tsbuildinfo
