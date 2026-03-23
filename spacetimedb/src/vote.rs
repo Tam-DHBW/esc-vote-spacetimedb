@@ -14,22 +14,25 @@ const AVAILABLE_TELE_VOTES: usize = 20;
 
 /// A single televote tap. Each viewer can have up to 20 rows per round.
 #[dsl(plural_name = tele_votes, method(update = false, delete = true))]
-#[spacetimedb::table(accessor = tele_vote)]
+#[spacetimedb::table(
+    accessor = tele_vote,
+    index(accessor = viewer_and_round, btree(columns=[viewer_id, round_id])),
+)]
 pub struct TeleVote {
     #[primary_key]
     #[auto_inc]
     #[create_wrapper]
     id: u64,
 
-    #[use_wrapper(crate::round::RoundId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Delete)]
-    round_id: u16,
-
     #[use_wrapper(crate::voter::ViewerId)]
     #[index(btree)]
     #[foreign_key(path = crate::voter, table = viewer, column = id, on_delete = Delete)]
     viewer_id: u64,
+
+    #[use_wrapper(crate::round::RoundId)]
+    #[index(btree)]
+    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Delete)]
+    round_id: u16,
 
     #[use_wrapper(crate::country::ParticipatingCountryId)]
     #[index(btree)]
@@ -46,6 +49,7 @@ pub struct TeleVote {
 )]
 #[spacetimedb::table(
     accessor = juror_vote,
+    index(accessor = juror_and_round, btree(columns = [juror_id, round_id])),
     index(accessor = juror_round_rank, btree(columns = [juror_id, round_id, rank])),
     index(accessor = juror_round_country, btree(columns = [juror_id, round_id, ranked_country_id])),
 )]
@@ -55,15 +59,15 @@ pub struct JurorVote {
     #[create_wrapper]
     id: u64,
 
-    #[use_wrapper(crate::round::RoundId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Delete)]
-    round_id: u16,
-
     #[use_wrapper(crate::voter::JurorId)]
     #[index(btree)]
     #[foreign_key(path = crate::voter, table = juror, column = id, on_delete = Delete)]
     juror_id: u64,
+
+    #[use_wrapper(crate::round::RoundId)]
+    #[index(btree)]
+    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Delete)]
+    round_id: u16,
 
     #[use_wrapper(crate::country::ParticipatingCountryId)]
     #[index(btree)]
@@ -119,7 +123,7 @@ fn submit_tele_votes(
 
     validate_votes(ctx, &round_id, &viewer.get_country_id(), &votes)?;
 
-    dsl.delete_tele_votes_by_viewer_id(&viewer)?;
+    dsl.delete_tele_votes_by_viewer_and_round(&viewer, &round_id)?;
 
     for to_country_id in votes {
         dsl.create_tele_vote(CreateTeleVote {
@@ -153,7 +157,7 @@ fn submit_juror_votes(
 
     validate_votes(ctx, &round.get_id(), &juror_country_id, &ranking)?;
 
-    dsl.delete_juror_votes_by_juror_id(&juror)?;
+    dsl.delete_juror_votes_by_juror_and_round(&juror, &round)?;
 
     for (i, ranked_country_id) in ranking.into_iter().enumerate() {
         dsl.create_juror_vote(CreateJurorVote {

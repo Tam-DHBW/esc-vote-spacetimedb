@@ -73,6 +73,7 @@ fn after_participation_insert(
     dsl: &spacetimedsl::DSL<'_, T>,
     participation: &Participation,
 ) -> Result<(), spacetimedsl::SpacetimeDSLError> {
+    let round = dsl.get_round_by_id(participation.get_round_id())?;
     let rotw_country = dsl.get_rotw_country()?;
     let participating_country_ids: HashSet<_> = dsl
         .get_all_participating_countries()
@@ -91,7 +92,9 @@ fn after_participation_insert(
     for country in dsl.get_all_countries() {
         dsl.create_ranking(make_create_country(RankingKind::TeleVote, country.get_id()))?;
 
-        if participating_country_ids.contains(&country.get_id()) {
+        if matches!(round.get_kind(), RoundKind::GrandFinal)
+            && participating_country_ids.contains(&country.get_id())
+        {
             dsl.create_ranking(make_create_country(RankingKind::JuryVote, country.get_id()))?;
         }
     }
