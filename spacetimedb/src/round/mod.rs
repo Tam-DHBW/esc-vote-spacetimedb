@@ -82,7 +82,7 @@ fn after_participation_insert(
         .map(|pc| pc.get_country_id())
         .collect();
 
-    let make_create_country = |kind: RankingKind, from_country_id: CountryId| CreateRanking {
+    let make_create_ranking = |kind: RankingKind, from_country_id: CountryId| CreateRanking {
         round_id: participation.get_round_id(),
         kind,
         from_country_id,
@@ -92,16 +92,16 @@ fn after_participation_insert(
     };
 
     for country in dsl.get_all_countries() {
-        dsl.create_ranking(make_create_country(RankingKind::TeleVote, country.get_id()))?;
+        dsl.create_ranking(make_create_ranking(RankingKind::TeleVote, country.get_id()))?;
 
         if matches!(round.get_kind(), RoundKind::GrandFinal)
             && participating_country_ids.contains(&country.get_id())
         {
-            dsl.create_ranking(make_create_country(RankingKind::JuryVote, country.get_id()))?;
+            dsl.create_ranking(make_create_ranking(RankingKind::JuryVote, country.get_id()))?;
         }
     }
 
-    dsl.create_ranking(make_create_country(
+    dsl.create_ranking(make_create_ranking(
         RankingKind::Overall,
         rotw_country.get_country_id(),
     ))?;

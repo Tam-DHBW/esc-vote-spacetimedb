@@ -106,10 +106,14 @@ macro_rules! impl_update_ranking {
 impl_update_ranking!(increment_ranking_score, +=, -=, [rank, score, ties]);
 impl_update_ranking!(decrement_ranking_score, -=, +=, [ties, score, rank]);
 
-/// Calculate the points for a rank, starting from 0
-pub fn get_points(rank: u16) -> u8 {
+/// Calculate the points for a ranking, starting from 0
+pub fn get_points(ranking: &Ranking) -> u8 {
+    if  *ranking.get_score() == 0 {
+        return 0;
+    }
+
     *[12, 10, 8, 7, 6, 5, 4, 3, 2, 1]
-        .get(rank as usize)
+        .get(*ranking.get_rank() as usize)
         .unwrap_or(&0)
 }
 
@@ -125,7 +129,7 @@ fn after_ranking_update(
     ) {
         let rotw_country_id = dsl.get_rotw_country()?.get_country_id();
 
-        let mut difference = get_points(*new.get_rank()) as i8 - get_points(*old.get_rank()) as i8;
+        let mut difference = get_points(new) as i8 - get_points(old) as i8;
 
         while difference > 0 {
             increment_ranking_score(
