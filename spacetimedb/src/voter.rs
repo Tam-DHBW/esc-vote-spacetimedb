@@ -1,48 +1,25 @@
-use spacetimedb::{Identity, ReducerContext, SpacetimeType, ViewContext};
+use spacetimedb::{ReducerContext, SpacetimeType, ViewContext};
+use spacetimedsl::dsl;
 
-use crate::country::CountryId;
+use crate::{
+    country::{CountryId, ParticipatingCountryId},
+    user::{CreateUser, CreateUserRow, GetUserRowOptionByIdentity},
+};
 
-impl VoterRole {
-    fn country_id(&self) -> Option<&CountryId> {
-        match self {
-            VoterRole::Rep(r) => Some(&r.country_id),
-            VoterRole::Juror(j) => Some(&j.country_id),
-            VoterRole::World => None,
-        }
-    }
-}
-
-/// Any kind of voter: rest-of-the-world, country representative, or country juror.
-#[spacetimedsl::dsl(plural_name = voters, method(update = false))]
-#[spacetimedb::table(accessor = voter)]
-pub struct Voter {
+/// A televote viewer, tied to a country.
+#[dsl(plural_name = viewers, method(update = false, delete = true))]
+#[spacetimedb::table(accessor = viewer)]
+pub struct Viewer {
     #[primary_key]
     #[auto_inc]
     #[create_wrapper]
-    #[referenced_by(path = crate::voter, table = rep)]
     #[referenced_by(path = crate::vote, table = tele_vote)]
     id: u64,
 
+    #[use_wrapper(crate::user::UserId)]
     #[unique]
-    #[index(btree)]
-    identity: Identity,
-}
-
-/// Voter representing a participating country.
-#[spacetimedsl::dsl(plural_name = reps, method(update = false, delete = true))]
-#[spacetimedb::table(accessor = rep)]
-pub struct Rep {
-    #[primary_key]
-    #[auto_inc]
-    #[create_wrapper]
-    #[referenced_by(path = crate::voter, table = juror)]
-    id: u64,
-
-    #[unique]
-    #[use_wrapper(VoterId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::voter, table = voter, column = id, on_delete = Delete)]
-    voter_id: u64,
+    #[foreign_key(path = crate::user, table = user, column = id, on_delete = Delete)]
+    user_id: u64,
 
     #[use_wrapper(crate::country::CountryId)]
     #[index(btree)]
@@ -50,8 +27,8 @@ pub struct Rep {
     country_id: u16,
 }
 
-/// Jury member of a participating country.
-#[spacetimedsl::dsl(plural_name = jurors, method(update = false, delete = true))]
+/// A juror for a participating country.
+#[dsl(plural_name = jurors, method(update = false, delete = true))]
 #[spacetimedb::table(accessor = juror)]
 pub struct Juror {
     #[primary_key]
@@ -60,35 +37,38 @@ pub struct Juror {
     #[referenced_by(path = crate::vote, table = juror_vote)]
     id: u64,
 
+    #[use_wrapper(crate::user::UserId)]
     #[unique]
-    #[use_wrapper(RepId)]
+    #[foreign_key(path = crate::user, table = user, column = id, on_delete = Delete)]
+    user_id: u64,
+
+    #[use_wrapper(crate::country::ParticipatingCountryId)]
     #[index(btree)]
-    #[foreign_key(path = crate::voter, table = rep, column = id, on_delete = Delete)]
-    rep_id: u64,
+    #[foreign_key(path = crate::country, table = participating_country, column = id, on_delete = Delete)]
+    participating_country_id: u16,
 
     name: String,
 }
 
 #[derive(SpacetimeType, Debug)]
-pub struct RepInfo {
+pub struct ViewerInfo {
     pub country_id: CountryId,
 }
 
 #[derive(SpacetimeType, Debug)]
 pub struct JurorInfo {
-    pub country_id: CountryId,
+    pub participating_country_id: ParticipatingCountryId,
     pub name: String,
 }
 
 #[derive(SpacetimeType, Debug)]
 pub enum VoterRole {
-    World,
-    Rep(RepInfo),
+    Viewer(ViewerInfo),
     Juror(JurorInfo),
 }
 
 #[derive(SpacetimeType, Debug)]
-pub struct CurrentVoter {
+pub struct CurrentUser {
     pub role: VoterRole,
 }
 
@@ -96,24 +76,25 @@ pub struct CurrentVoter {
 pub fn register(ctx: &ReducerContext, role: VoterRole) -> Result<(), String> {
     let dsl = spacetimedsl::dsl(ctx);
 
-    if dsl.get_voter_by_identity(&ctx.sender()).is_ok() {
-        return Err("Already registered".to_string());
-    }
-
-    let voter = dsl.create_voter(CreateVoter {
+    let user = dsl.create_user(CreateUser {
         identity: ctx.sender(),
     })?;
 
-    if let Some(country_id) = role.country_id() {
-        let rep = dsl.create_rep(CreateRep {
-            voter_id: voter.get_id().clone(),
-            country_id: country_id.clone(),
-        })?;
-
-        if let VoterRole::Juror(info) = &role {
+    match role {
+        VoterRole::Viewer(ViewerInfo { country_id }) => {
+            dsl.create_viewer(CreateViewer {
+                user_id: user.get_id(),
+                country_id,
+            })?;
+        }
+        VoterRole::Juror(JurorInfo {
+            participating_country_id,
+            name,
+        }) => {
             dsl.create_juror(CreateJuror {
-                rep_id: rep.get_id().clone(),
-                name: info.name.clone(),
+                user_id: user.get_id(),
+                participating_country_id,
+                name,
             })?;
         }
     }
@@ -121,27 +102,28 @@ pub fn register(ctx: &ReducerContext, role: VoterRole) -> Result<(), String> {
     Ok(())
 }
 
-#[spacetimedb::view(accessor = current_voter, public)]
-fn current_voter(ctx: &ViewContext) -> Option<CurrentVoter> {
+#[spacetimedb::view(accessor = current_user, public)]
+fn current_user(ctx: &ViewContext) -> Option<CurrentUser> {
     let dsl = spacetimedsl::read_only_dsl(ctx);
 
-    let voter = dsl.get_voter_by_identity(&ctx.sender()).ok()?;
-    let rep = dsl.get_rep_by_voter_id(voter.get_id()).ok();
+    let user = dsl.get_user_by_identity(&ctx.sender()).ok()?;
 
-    let role = match rep {
-        None => VoterRole::World,
-
-        Some(rep) => match dsl.get_juror_by_rep_id(rep.get_id()).ok() {
-            None => VoterRole::Rep(RepInfo {
-                country_id: rep.get_country_id().clone(),
-            }),
-
-            Some(juror) => VoterRole::Juror(JurorInfo {
-                country_id: rep.get_country_id().clone(),
+    if let Ok(juror) = dsl.get_juror_by_user_id(&user) {
+        return Some(CurrentUser {
+            role: VoterRole::Juror(JurorInfo {
+                participating_country_id: juror.get_participating_country_id(),
                 name: juror.get_name().clone(),
             }),
-        },
-    };
+        });
+    }
 
-    Some(CurrentVoter { role })
+    if let Ok(viewer) = dsl.get_viewer_by_user_id(&user) {
+        return Some(CurrentUser {
+            role: VoterRole::Viewer(ViewerInfo {
+                country_id: viewer.get_country_id(),
+            }),
+        });
+    }
+
+    None
 }

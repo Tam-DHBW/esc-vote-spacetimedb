@@ -1,8 +1,6 @@
 use spacetimedb::{SpacetimeType, ViewContext};
 use spacetimedsl::dsl;
 
-use crate::country::CountryId;
-
 #[derive(SpacetimeType, Clone, Copy, PartialEq, Debug, strum::Display)]
 pub enum RoundKind {
     SemiFinal1,
@@ -33,8 +31,6 @@ pub struct Round {
     year: u16,
 
     kind: RoundKind,
-
-    countries: Vec<CountryId>,
 }
 
 #[spacetimedsl::dsl(singleton, method(update = false, delete = true))]
