@@ -28,7 +28,7 @@ pub struct Viewer {
 
 /// A juror for a participating country.
 #[spacetimedsl::dsl(plural_name = jurors, method(update = false, delete = true))]
-#[spacetimedb::table(accessor = juror)]
+#[spacetimedb::table(accessor = juror, public)]
 pub struct Juror {
     #[primary_key]
     #[auto_inc]

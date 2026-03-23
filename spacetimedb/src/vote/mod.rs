@@ -51,6 +51,7 @@ pub struct TeleVote {
 )]
 #[spacetimedb::table(
     accessor = juror_vote,
+    public,
     index(accessor = juror_and_round, btree(columns = [juror_id, round_id])),
     index(accessor = juror_round_rank, btree(columns = [juror_id, round_id, rank])),
     index(accessor = juror_round_country, btree(columns = [juror_id, round_id, ranked_country_id])),
