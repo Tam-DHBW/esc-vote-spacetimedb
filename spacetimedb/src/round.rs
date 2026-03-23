@@ -1,6 +1,8 @@
 use spacetimedb::{SpacetimeType, ViewContext};
 use spacetimedsl::dsl;
 
+use crate::country::ParticipatingCountryId;
+
 #[derive(SpacetimeType, Clone, Copy, PartialEq, Debug, strum::Display)]
 pub enum RoundKind {
     SemiFinal1,
@@ -23,14 +25,34 @@ pub struct Round {
     #[primary_key]
     #[auto_inc]
     #[create_wrapper]
+    #[referenced_by(path = crate::round, table = participation)]
+    #[referenced_by(path = crate::round, table = active_round)]
     #[referenced_by(path = crate::vote, table = tele_vote)]
     #[referenced_by(path = crate::vote, table = juror_vote)]
-    #[referenced_by(path = crate::round, table = active_round)]
     id: u16,
 
     year: u16,
 
     kind: RoundKind,
+}
+
+#[spacetimedsl::dsl(plural_name = participations, method(update = false, delete = false))]
+#[spacetimedb::table(accessor = participation)]
+pub struct Participation {
+    #[primary_key]
+    #[auto_inc]
+    #[create_wrapper]
+    id: u16,
+
+    #[use_wrapper(RoundId)]
+    #[index(btree)]
+    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Error)]
+    round_id: u16,
+
+    #[use_wrapper(ParticipatingCountryId)]
+    #[index(btree)]
+    #[foreign_key(path = crate::country, table = participating_country, column = id, on_delete = Error)]
+    participating_country_id: u16,
 }
 
 #[spacetimedsl::dsl(singleton, method(update = false, delete = true))]

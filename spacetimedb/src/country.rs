@@ -25,6 +25,7 @@ pub struct ParticipatingCountry {
     #[auto_inc]
     #[create_wrapper]
     #[referenced_by(path = crate::voter, table = juror)]
+    #[referenced_by(path = crate::round, table = participation)]
     #[referenced_by(path = crate::vote, table = tele_vote)]
     #[referenced_by(path = crate::vote, table = juror_vote)]
     id: u16,
@@ -35,6 +36,7 @@ pub struct ParticipatingCountry {
     country_id: u16,
 }
 
+// Rest of the World
 #[spacetimedsl::dsl(singleton, method(update = false, delete = true))]
 #[spacetimedb::table(accessor = rotw_country, public)]
 pub struct RotwCountry {
