@@ -1,5 +1,4 @@
 use spacetimedb::{ReducerContext, SpacetimeType, ViewContext};
-use spacetimedsl::dsl;
 
 use crate::{
     country::{CountryId, ParticipatingCountryId},
@@ -7,7 +6,7 @@ use crate::{
 };
 
 /// A televote viewer, tied to a country.
-#[dsl(plural_name = viewers, method(update = false, delete = true))]
+#[spacetimedsl::dsl(plural_name = viewers, method(update = false, delete = true))]
 #[spacetimedb::table(accessor = viewer)]
 pub struct Viewer {
     #[primary_key]
@@ -28,7 +27,7 @@ pub struct Viewer {
 }
 
 /// A juror for a participating country.
-#[dsl(plural_name = jurors, method(update = false, delete = true))]
+#[spacetimedsl::dsl(plural_name = jurors, method(update = false, delete = true))]
 #[spacetimedb::table(accessor = juror)]
 pub struct Juror {
     #[primary_key]

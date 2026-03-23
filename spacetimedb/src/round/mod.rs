@@ -11,6 +11,8 @@ use crate::{
     ranking::{CreateRanking, CreateRankingRow, RankingKind},
 };
 
+pub mod admin;
+
 #[derive(SpacetimeType, Clone, Copy, PartialEq, Debug, strum::Display)]
 pub enum RoundKind {
     SemiFinal1,
