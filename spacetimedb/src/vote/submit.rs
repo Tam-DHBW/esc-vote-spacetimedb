@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
 use spacetimedb::ReducerContext;
-use spacetimedsl::dsl;
 
 use crate::{
     country::{CountryId, GetParticipatingCountryRowOptionById, ParticipatingCountryId},
@@ -10,72 +9,10 @@ use crate::{
     voter::{GetJurorRowOptionByUserId, GetViewerRowOptionByUserId},
 };
 
-const AVAILABLE_TELE_VOTES: usize = 20;
-
-/// A single televote tap. Each viewer can have up to 20 rows per round.
-#[dsl(plural_name = tele_votes, method(update = false, delete = true))]
-#[spacetimedb::table(
-    accessor = tele_vote,
-    index(accessor = viewer_and_round, btree(columns=[viewer_id, round_id])),
-)]
-pub struct TeleVote {
-    #[primary_key]
-    #[auto_inc]
-    #[create_wrapper]
-    id: u64,
-
-    #[use_wrapper(crate::voter::ViewerId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::voter, table = viewer, column = id, on_delete = Delete)]
-    viewer_id: u64,
-
-    #[use_wrapper(crate::round::RoundId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Delete)]
-    round_id: u16,
-
-    #[use_wrapper(crate::country::ParticipatingCountryId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::country, table = participating_country, column = id, on_delete = Delete)]
-    to_country_id: u16,
-}
-
-/// A juror's rank for one country in a round
-#[dsl(
-    plural_name = juror_votes,
-    method(update = false, delete = true),
-    unique_index(name = juror_round_rank),
-    unique_index(name = juror_round_country),
-)]
-#[spacetimedb::table(
-    accessor = juror_vote,
-    index(accessor = juror_and_round, btree(columns = [juror_id, round_id])),
-    index(accessor = juror_round_rank, btree(columns = [juror_id, round_id, rank])),
-    index(accessor = juror_round_country, btree(columns = [juror_id, round_id, ranked_country_id])),
-)]
-pub struct JurorVote {
-    #[primary_key]
-    #[auto_inc]
-    #[create_wrapper]
-    id: u64,
-
-    #[use_wrapper(crate::voter::JurorId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::voter, table = juror, column = id, on_delete = Delete)]
-    juror_id: u64,
-
-    #[use_wrapper(crate::round::RoundId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::round, table = round, column = id, on_delete = Delete)]
-    round_id: u16,
-
-    #[use_wrapper(crate::country::ParticipatingCountryId)]
-    #[index(btree)]
-    #[foreign_key(path = crate::country, table = participating_country, column = id, on_delete = Delete)]
-    ranked_country_id: u16,
-
-    rank: u16,
-}
+use super::{
+    CreateJurorVote, CreateJurorVoteRow, CreateTeleVote, CreateTeleVoteRow,
+    DeleteJurorVoteRowsByJurorAndRound, DeleteTeleVoteRowsByViewerAndRound, AVAILABLE_TELE_VOTES,
+};
 
 fn validate_votes<'a>(
     ctx: &ReducerContext,
