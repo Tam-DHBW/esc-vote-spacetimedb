@@ -10,6 +10,8 @@ const HOST = import.meta.env.VITE_SPACETIMEDB_HOST;
 const DB_NAME = import.meta.env.VITE_SPACETIMEDB_DB_NAME;
 const TOKEN_KEY = `${HOST}/${DB_NAME}/auth_token`;
 
+const root = createRoot(document.getElementById("root")!);
+
 const connectionBuilder = DbConnection.builder()
   .withUri(HOST)
   .withDatabaseName(DB_NAME)
@@ -20,9 +22,18 @@ const connectionBuilder = DbConnection.builder()
     conn.subscriptionBuilder().subscribeToAllTables();
   })
   .onDisconnect(() => console.log("Disconnected"))
-  .onConnectError((_ctx, err) => console.error("Connection error:", err));
+  .onConnectError((_ctx, err) => {
+    console.error("Connection error:", err);
+    root.render(
+      <StrictMode>
+        <div className="flex h-screen items-center justify-center text-neutral-400">
+          <p>Could not connect to the database.</p>
+        </div>
+      </StrictMode>,
+    );
+  });
 
-createRoot(document.getElementById("root")!).render(
+root.render(
   <StrictMode>
     <SpacetimeDBProvider connectionBuilder={connectionBuilder}>
       <App />
