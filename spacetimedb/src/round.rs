@@ -1,7 +1,15 @@
+use std::collections::HashSet;
+
 use spacetimedb::{SpacetimeType, ViewContext};
 use spacetimedsl::dsl;
 
-use crate::country::ParticipatingCountryId;
+use crate::{
+    country::{
+        CountryId, GetAllCountryRows, GetAllParticipatingCountryRows, GetRotwCountryRow,
+        ParticipatingCountryId,
+    },
+    ranking::{CreateRanking, CreateRankingRow, RankingKind},
+};
 
 #[derive(SpacetimeType, Clone, Copy, PartialEq, Debug, strum::Display)]
 pub enum RoundKind {
@@ -29,6 +37,7 @@ pub struct Round {
     #[referenced_by(path = crate::round, table = active_round)]
     #[referenced_by(path = crate::vote, table = tele_vote)]
     #[referenced_by(path = crate::vote, table = juror_vote)]
+    #[referenced_by(path = crate::ranking, table = ranking)]
     id: u16,
 
     year: u16,
@@ -36,7 +45,11 @@ pub struct Round {
     kind: RoundKind,
 }
 
-#[spacetimedsl::dsl(plural_name = participations, method(update = false, delete = false))]
+#[spacetimedsl::dsl(
+    plural_name = participations,
+    method(update = false, delete = false),
+    hook(after(insert)),
+)]
 #[spacetimedb::table(accessor = participation)]
 pub struct Participation {
     #[primary_key]
@@ -55,6 +68,42 @@ pub struct Participation {
     participating_country_id: u16,
 }
 
+#[spacetimedsl::hook]
+fn after_participation_insert(
+    dsl: &spacetimedsl::DSL<'_, T>,
+    participation: &Participation,
+) -> Result<(), spacetimedsl::SpacetimeDSLError> {
+    let rotw_country = dsl.get_rotw_country()?;
+    let participating_country_ids: HashSet<_> = dsl
+        .get_all_participating_countries()
+        .map(|pc| pc.get_country_id())
+        .collect();
+
+    let make_create_country = |kind: RankingKind, from_country_id: CountryId| CreateRanking {
+        round_id: participation.get_round_id(),
+        kind,
+        from_country_id,
+        to_country_id: participation.get_participating_country_id(),
+        score: 0,
+        rank: 0,
+    };
+
+    for country in dsl.get_all_countries() {
+        dsl.create_ranking(make_create_country(RankingKind::TeleVote, country.get_id()))?;
+
+        if participating_country_ids.contains(&country.get_id()) {
+            dsl.create_ranking(make_create_country(RankingKind::JuryVote, country.get_id()))?;
+        }
+    }
+
+    dsl.create_ranking(make_create_country(
+        RankingKind::Overall,
+        rotw_country.get_country_id(),
+    ))?;
+
+    Ok(())
+}
+
 #[spacetimedsl::dsl(singleton, method(update = false, delete = true))]
 #[spacetimedb::table(accessor = active_round)]
 pub struct ActiveRound {
@@ -63,8 +112,8 @@ pub struct ActiveRound {
     round_id: u16,
 }
 
-#[spacetimedb::view(accessor = active_round, public)]
-fn active_round_view(ctx: &ViewContext) -> Option<Round> {
+#[spacetimedb::view(accessor = get_active_round, public)]
+fn get_active_round(ctx: &ViewContext) -> Option<Round> {
     let dsl = spacetimedsl::read_only_dsl(ctx);
 
     let round_id = dsl.get_active_round().ok()?.get_round_id();

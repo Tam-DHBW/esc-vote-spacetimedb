@@ -1,4 +1,5 @@
 pub mod country;
+pub mod ranking;
 pub mod round;
 pub mod user;
 pub mod vote;

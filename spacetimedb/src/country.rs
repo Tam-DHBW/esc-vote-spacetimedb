@@ -7,6 +7,7 @@ pub struct Country {
     #[referenced_by(path = crate::voter, table = viewer)]
     #[referenced_by(path = crate::country, table = participating_country)]
     #[referenced_by(path = crate::country, table = rotw_country)]
+    #[referenced_by(path = crate::ranking, table = ranking)]
     id: u16,
 
     name: String,
@@ -28,6 +29,7 @@ pub struct ParticipatingCountry {
     #[referenced_by(path = crate::round, table = participation)]
     #[referenced_by(path = crate::vote, table = tele_vote)]
     #[referenced_by(path = crate::vote, table = juror_vote)]
+    #[referenced_by(path = crate::ranking, table = ranking)]
     id: u16,
 
     #[use_wrapper(CountryId)]
@@ -36,7 +38,7 @@ pub struct ParticipatingCountry {
     country_id: u16,
 }
 
-// Rest of the World
+/// Rest of the World
 #[spacetimedsl::dsl(singleton, method(update = false, delete = true))]
 #[spacetimedb::table(accessor = rotw_country, public)]
 pub struct RotwCountry {
