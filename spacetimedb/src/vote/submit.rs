@@ -57,19 +57,23 @@ fn submit_tele_votes(
     let user = dsl.get_user_by_identity(&ctx.sender())?;
     let viewer = dsl.get_viewer_by_user_id(&user)?;
 
-    let round_id = dsl.get_active_round()?.get_round_id();
+    let round = dsl.get_round_by_id(dsl.get_active_round()?.get_round_id())?;
+
+    if !round.get_voting_open() {
+        return Err("Voting is closed for this round".to_string());
+    }
 
     if votes.len() > AVAILABLE_TELE_VOTES {
         return Err(format!("You can only submit {AVAILABLE_TELE_VOTES} votes"));
     }
 
-    validate_votes(ctx, &round_id, &viewer.get_country_id(), &votes)?;
+    validate_votes(ctx, &round.get_id(), &viewer.get_country_id(), &votes)?;
 
-    dsl.delete_tele_votes_by_viewer_and_round(&viewer, &round_id)?;
+    dsl.delete_tele_votes_by_viewer_and_round(&viewer, &round.get_id())?;
 
     for to_country_id in votes {
         dsl.create_tele_vote(CreateTeleVote {
-            round_id: round_id.clone(),
+            round_id: round.get_id(),
             viewer_id: viewer.get_id(),
             to_country_id,
         })?;
@@ -85,17 +89,21 @@ fn submit_juror_votes(
 ) -> Result<(), String> {
     let dsl = spacetimedsl::dsl(ctx);
 
-    let round = dsl.get_round_by_id(dsl.get_active_round()?.get_round_id())?;
-
-    if !matches!(round.get_kind(), crate::round::RoundKind::GrandFinal) {
-        return Err("Jurors can only vote in the grand final!".to_string());
-    }
-
     let user = dsl.get_user_by_identity(&ctx.sender())?;
     let juror = dsl.get_juror_by_user_id(&user)?;
     let juror_country_id = dsl
         .get_participating_country_by_id(juror.get_participating_country_id())?
         .get_country_id();
+
+    let round = dsl.get_round_by_id(dsl.get_active_round()?.get_round_id())?;
+
+    if !round.get_voting_open() {
+        return Err("Voting is closed for this round".to_string());
+    }
+
+    if !matches!(round.get_kind(), crate::round::RoundKind::GrandFinal) {
+        return Err("Jurors can only vote in the grand final!".to_string());
+    }
 
     validate_votes(ctx, &round.get_id(), &juror_country_id, &ranking)?;
 

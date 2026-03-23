@@ -8,7 +8,7 @@ use crate::{
     round::{
         CreateActiveRound, CreateActiveRoundRow, CreateParticipation, CreateParticipationRow,
         CreateRound, CreateRoundRow, DeleteActiveRoundRow, GetActiveRoundRow,
-        GetRoundRowOptionById, GetRoundRowOptionByYearAndKind, RoundKind,
+        GetRoundRowOptionById, GetRoundRowOptionByYearAndKind, RoundKind, UpdateRoundRowById,
     },
 };
 
@@ -21,11 +21,13 @@ fn create_semi_finals(ctx: &ReducerContext, year: u16) -> Result<(), String> {
     let sf1 = dsl.create_round(CreateRound {
         year,
         kind: RoundKind::SemiFinal1,
+        voting_open: true,
     })?;
 
     let sf2 = dsl.create_round(CreateRound {
         year,
         kind: RoundKind::SemiFinal2,
+        voting_open: true,
     })?;
 
     let rounds = [sf1.get_id(), sf2.get_id()];
@@ -50,7 +52,14 @@ fn advance_round(ctx: &ReducerContext) -> Result<(), String> {
     let dsl = spacetimedsl::dsl(ctx);
 
     let active = dsl.get_active_round()?;
-    let current_round = dsl.get_round_by_id(active.get_round_id())?;
+    let mut current_round = dsl.get_round_by_id(active.get_round_id())?;
+
+    // First call closes voting, second call advances the round.
+    if *current_round.get_voting_open() {
+        *current_round.get_voting_open_mut() = false;
+        dsl.update_round_by_id(current_round)?;
+        return Ok(());
+    }
 
     match current_round.get_kind() {
         RoundKind::SemiFinal1 => {
@@ -87,6 +96,7 @@ fn advance_round(ctx: &ReducerContext) -> Result<(), String> {
             let grand_final = dsl.create_round(CreateRound {
                 year: *current_round.get_year(),
                 kind: RoundKind::GrandFinal,
+                voting_open: true,
             })?;
 
             for country_id in qualifiers {

@@ -54,6 +54,8 @@ export default function Vote() {
   if (!user) return <Navigate to="/register" />;
   if (!activeRound)
     return <div className="p-8 text-neutral-400">No active round.</div>;
+  if (!activeRound.votingOpen)
+    return <div className="p-8 text-neutral-400">Voting is closed.</div>;
   if (countries.length === 0)
     return (
       <div className="p-8 text-neutral-400">

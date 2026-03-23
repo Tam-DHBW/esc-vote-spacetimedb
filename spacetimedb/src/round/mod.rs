@@ -45,6 +45,8 @@ pub struct Round {
     year: u16,
 
     kind: RoundKind,
+
+    pub voting_open: bool,
 }
 
 #[spacetimedsl::dsl(

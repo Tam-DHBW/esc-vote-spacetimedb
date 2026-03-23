@@ -46,9 +46,11 @@ export default function Admin() {
           onClick={() => advanceRound()}
           className="w-full rounded-lg bg-amber-600 py-2 font-medium hover:bg-amber-500"
         >
-          {activeRound.kind.tag === "GrandFinal"
-            ? "Conclude Contest"
-            : "Advance to Next Round"}
+          {activeRound.votingOpen
+            ? "Close Voting"
+            : activeRound.kind.tag === "GrandFinal"
+              ? "Conclude Contest"
+              : "Advance to Next Round"}
         </button>
       )}
     </div>
