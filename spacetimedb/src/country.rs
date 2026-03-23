@@ -52,16 +52,24 @@ fn init(ctx: &spacetimedb::ReducerContext) {
     let dsl = spacetimedsl::dsl(ctx);
 
     let countries = [
-        ("Sweden", "🇸🇪", false),
-        ("Switzerland", "🇨🇭", false),
+        ("Austria", "🇦🇹", false),
+        ("Croatia", "🇭🇷", false),
+        ("Finland", "🇫🇮", false),
         ("France", "🇫🇷", false),
         ("Germany", "🇩🇪", false),
+        ("Greece", "🇬🇷", false),
+        ("Ireland", "🇮🇪", false),
         ("Italy", "🇮🇹", false),
-        ("Spain", "🇪🇸", false),
-        ("United Kingdom", "🇬🇧", false),
+        ("Netherlands", "🇳🇱", false),
         ("Norway", "🇳🇴", false),
-        ("Finland", "🇫🇮", false),
+        ("Poland", "🇵🇱", false),
+        ("Portugal", "🇵🇹", false),
+        ("Serbia", "🇷🇸", false),
+        ("Spain", "🇪🇸", false),
+        ("Sweden", "🇸🇪", false),
+        ("Switzerland", "🇨🇭", false),
         ("Ukraine", "🇺🇦", false),
+        ("United Kingdom", "🇬🇧", false),
         ("Rest of the World", "🌍", true),
     ];
 

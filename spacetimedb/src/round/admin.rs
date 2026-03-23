@@ -12,7 +12,9 @@ use crate::{
     },
 };
 
-const QUALIFIERS_PER_SEMI: usize = 10;
+// ESC actually uses 10 per semifinal,
+// but this is too many for our toy project here
+const QUALIFIERS_PER_SEMI: usize = 2;
 
 #[spacetimedb::reducer]
 fn create_semi_finals(ctx: &ReducerContext, year: u16) -> Result<(), String> {
