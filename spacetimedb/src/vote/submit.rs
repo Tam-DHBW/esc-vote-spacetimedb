@@ -1,10 +1,15 @@
 use std::collections::HashSet;
 
-use spacetimedb::ReducerContext;
+use spacetimedb::{ReducerContext, SpacetimeType, ViewContext};
 
 use crate::{
-    country::{CountryId, GetParticipatingCountryRowOptionById, ParticipatingCountryId},
-    round::{GetActiveRoundRow, GetParticipationRowsByRoundId, GetRoundRowOptionById, RoundId},
+    country::{
+        CountryId, GetParticipatingCountryRowOptionByCountryId,
+        GetParticipatingCountryRowOptionById, ParticipatingCountryId,
+    },
+    round::{
+        GetActiveRoundRow, GetParticipationRowsByRoundId, GetRoundRowOptionById, RoundId, RoundKind,
+    },
     user::GetUserRowOptionByIdentity,
     voter::{GetJurorRowOptionByUserId, GetViewerRowOptionByUserId},
 };
@@ -106,4 +111,48 @@ fn submit_juror_votes(
     }
 
     Ok(())
+}
+
+#[derive(SpacetimeType, Debug)]
+pub struct VotableCountry {
+    pub participating_country_id: ParticipatingCountryId,
+}
+
+#[spacetimedb::view(accessor = votable_countries, public)]
+fn votable_countries(ctx: &ViewContext) -> Vec<VotableCountry> {
+    let dsl = spacetimedsl::read_only_dsl(ctx);
+
+    let Ok(active_round) = dsl.get_active_round() else {
+        return Vec::default();
+    };
+
+    let Ok(user) = dsl.get_user_by_identity(&ctx.sender()) else {
+        return Vec::default();
+    };
+
+    let disallowed_country = if let Ok(juror) = dsl.get_juror_by_user_id(&user) {
+        if *dsl
+            .get_round_by_id(active_round.get_round_id())
+            .unwrap()
+            .get_kind()
+            != RoundKind::GrandFinal
+        {
+            return Vec::default();
+        }
+
+        Some(juror.get_participating_country_id())
+    } else if let Ok(viewer) = dsl.get_viewer_by_user_id(&user) {
+        dsl.get_participating_country_by_country_id(viewer.get_country_id())
+            .ok()
+            .map(|p| p.get_id())
+    } else {
+        return Vec::default();
+    };
+
+    dsl.get_participations_by_round_id(active_round.get_round_id())
+        .filter(|p| Some(p.get_participating_country_id()) != disallowed_country)
+        .map(|p| VotableCountry {
+            participating_country_id: p.get_participating_country_id(),
+        })
+        .collect()
 }
