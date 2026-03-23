@@ -71,6 +71,7 @@ pub struct Ranking {
 
 macro_rules! impl_update_ranking {
     ($name:ident, $add:tt, $sub:tt, [$($op:ident),+]) => {
+        #[allow(unused_assignments)]
         pub fn $name<T: WriteContext>(
             dsl: &spacetimedsl::DSL<'_, T>,
             round_id: &RoundId,
@@ -89,6 +90,7 @@ macro_rules! impl_update_ranking {
         *$entry.get_rank_mut() $sub $dsl
             .get_rankings_by_round_kind_from_score($round, $kind, $from, &($entry.get_score() + 1))
             .count() as u16;
+        $entry = $dsl.update_ranking_by_id($entry)?;
 
     };
     (@score, $dsl:ident, $round:ident, $kind:ident, $from:ident, $entry:ident, $add:tt, $sub:tt) => {
