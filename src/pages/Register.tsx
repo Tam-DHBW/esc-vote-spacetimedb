@@ -1,97 +1,112 @@
 import { useState } from "react";
 import { Navigate } from "react-router";
 import { tables, reducers } from "../module_bindings";
-import { useSpacetimeDB, useTable, useReducer } from "spacetimedb/react";
+import { useTable, useReducer } from "spacetimedb/react";
 
 export default function Register() {
-  const { isActive: connected } = useSpacetimeDB();
   const [countries] = useTable(tables.country);
-  const [[voter], ready] = useTable(tables.current_voter);
+  const [participatingCountries] = useTable(tables.participating_country);
+  const [[currentUser]] = useTable(tables.current_user);
   const register = useReducer(reducers.register);
 
-  const [countryId, setCountryId] = useState<number | null>(null);
   const [isJuror, setIsJuror] = useState(false);
+  const [countryId, setCountryId] = useState<number | null>(null);
   const [name, setName] = useState("");
 
-  if (voter) return <Navigate to="/" />;
+  if (currentUser) return <Navigate to="/" />;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!connected) return;
+  const participatingCountryIds = new Set(
+    participatingCountries.map((pc) => pc.countryId),
+  );
 
-    const role =
-      countryId == null
-        ? { tag: "World" as const }
-        : isJuror
-          ? {
-              tag: "Juror" as const,
-              value: { countryId: { value: countryId }, name },
-            }
-          : { tag: "Rep" as const, value: { countryId: { value: countryId } } };
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (countryId == null) return;
 
-    register({ role });
+    if (isJuror) {
+      const participatingCountry = participatingCountries.find(
+        (pc) => pc.countryId === countryId,
+      );
+      if (!participatingCountry) return;
+      register({
+        role: {
+          tag: "Juror",
+          value: {
+            participatingCountryId: { value: participatingCountry.id },
+            name,
+          },
+        },
+      });
+    } else {
+      register({
+        role: {
+          tag: "Viewer",
+          value: { countryId: { value: countryId } },
+        },
+      });
+    }
   };
 
   return (
     <div className="mx-auto max-w-md p-8">
-      <h1 className="mb-6 text-3xl font-bold">ESC Vote — Register</h1>
-      {!ready && <p className="text-neutral-400">Loading…</p>}
-      {!connected && <p className="text-neutral-400">Connecting…</p>}
+      <h1 className="mb-6 text-2xl font-bold">Register</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label
-            htmlFor="country"
-            className="mb-1 block text-sm text-neutral-400"
-          >
-            Country
-          </label>
+          <label className="mb-1 block text-sm text-neutral-400">Role</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={!isJuror}
+                onChange={() => setIsJuror(false)}
+              />
+              Televoter
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={isJuror}
+                onChange={() => setIsJuror(true)}
+              />
+              Juror
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm text-neutral-400">Country</label>
           <select
-            id="country"
             value={countryId?.toString() ?? ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              setCountryId(val ? Number(val) : null);
-              if (!val) setIsJuror(false);
-            }}
-            disabled={!connected}
+            onChange={(event) =>
+              setCountryId(
+                event.target.value ? Number(event.target.value) : null,
+              )
+            }
             className="w-full rounded-lg bg-neutral-800 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">None (Rest of the World)</option>
-            {countries.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            <option value="">Select country…</option>
+            {countries
+              .filter(
+                (country) =>
+                  !isJuror || participatingCountryIds.has(country.id),
+              )
+              .map((country) => (
+                <option key={country.id} value={country.id}>
+                  {country.emoji ?? ""} {country.name}
+                </option>
+              ))}
           </select>
         </div>
 
-        {countryId != null && (
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isJuror}
-              onChange={(e) => setIsJuror(e.target.checked)}
-              className="rounded"
-            />
-            I am a juror
-          </label>
-        )}
-
         {isJuror && (
           <div>
-            <label
-              htmlFor="name"
-              className="mb-1 block text-sm text-neutral-400"
-            >
-              Name
-            </label>
+            <label className="mb-1 block text-sm text-neutral-400">Name</label>
             <input
-              id="name"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              onChange={(event) => setName(event.target.value)}
               required
+              placeholder="Your name"
               className="w-full rounded-lg bg-neutral-800 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -99,8 +114,8 @@ export default function Register() {
 
         <button
           type="submit"
-          disabled={!connected}
-          className="rounded-lg bg-blue-600 px-4 py-2 font-medium transition hover:bg-blue-500 disabled:opacity-50"
+          disabled={!countryId || (isJuror && !name)}
+          className="rounded-lg bg-blue-600 px-4 py-2 font-medium hover:bg-blue-500 disabled:opacity-50"
         >
           Register
         </button>
