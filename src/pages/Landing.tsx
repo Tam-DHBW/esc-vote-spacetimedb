@@ -5,25 +5,36 @@ import { useTable } from "spacetimedb/react";
 import type { RankingKind } from "../module_bindings/types";
 
 export default function Landing() {
-  const [rankings] = useTable(tables.ranking);
-  const [countries] = useTable(tables.country);
-  const [participatingCountries] = useTable(tables.participating_country);
   const [[activeRound]] = useTable(tables.get_active_round);
-  const [[rotwCountry]] = useTable(tables.rotw_country);
-  const [jurors] = useTable(tables.juror);
-  const [jurorVotes] = useTable(tables.juror_vote);
-  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(
-    null,
-  );
 
   if (!activeRound)
     return <div className="p-8 text-neutral-400">No active round.</div>;
+
+  return <RoundRankings roundId={activeRound.id} />;
+}
+
+function RoundRankings({ roundId }: { roundId: number }) {
+  const [countries] = useTable(tables.country);
+  const [participatingCountries] = useTable(tables.participating_country);
+  const [[rotwCountry]] = useTable(tables.rotw_country);
+  const [jurors] = useTable(tables.juror);
+
+  const [rankings] = useTable(
+    tables.ranking.where((row) => row.roundId.eq(roundId)),
+  );
+  const [jurorVotes] = useTable(
+    tables.juror_vote.where((row) => row.roundId.eq(roundId)),
+  );
+
+  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(
+    null,
+  );
 
   const countryById = new Map(
     countries.map((country) => [country.id, country]),
   );
 
-  const countryDisplayName = (participatingCountryId: number) => {
+  const countryDisplayName = (participatingCountryId: number): string => {
     const participatingCountry = participatingCountries.find(
       (pc) => pc.id === participatingCountryId,
     );
@@ -37,9 +48,7 @@ export default function Landing() {
     rankings
       .filter(
         (ranking) =>
-          ranking.roundId === activeRound.id &&
-          ranking.kind.tag === kind &&
-          ranking.fromCountryId === fromCountryId,
+          ranking.kind.tag === kind && ranking.fromCountryId === fromCountryId,
       )
       .sort((a, b) => a.rank - b.rank);
 
@@ -67,10 +76,7 @@ export default function Landing() {
         .map((juror) => ({
           name: juror.name,
           votes: jurorVotes
-            .filter(
-              (vote) =>
-                vote.jurorId === juror.id && vote.roundId === activeRound.id,
-            )
+            .filter((vote) => vote.jurorId === juror.id)
             .sort((a, b) => a.rank - b.rank),
         }))
     : [];

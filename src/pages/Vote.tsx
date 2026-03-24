@@ -3,7 +3,9 @@ import { Navigate } from "react-router";
 import { tables, reducers } from "../module_bindings";
 import { useTable, useReducer } from "spacetimedb/react";
 
-function useVotableCountries() {
+type VotableCountry = { participatingCountryId: number; name: string };
+
+function useVotableCountries(): VotableCountry[] {
   const [votable] = useTable(tables.votable_countries);
   const [participatingCountries] = useTable(tables.participating_country);
   const [countries] = useTable(tables.country);
@@ -32,7 +34,10 @@ function useVotableCountries() {
   }, [votable, participatingCountries, countries]);
 }
 
-function useSubmitFeedback() {
+function useSubmitFeedback(): {
+  submitted: boolean;
+  submit: (action: () => void) => void;
+} {
   const [submitted, setSubmitted] = useState(false);
 
   const submit = (action: () => void) => {
@@ -43,8 +48,6 @@ function useSubmitFeedback() {
 
   return { submitted, submit };
 }
-
-type VotableCountry = { participatingCountryId: number; name: string };
 
 export default function Vote() {
   const [[user]] = useTable(tables.current_user);

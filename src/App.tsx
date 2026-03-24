@@ -8,6 +8,52 @@ import Vote from "./pages/Vote";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
 
+export default function App() {
+  const [[activeRound]] = useTable(tables.get_active_round);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (event: PromiseRejectionEvent) =>
+      setError(event.reason?.message ?? String(event.reason));
+    window.addEventListener("unhandledrejection", handler);
+    return () => window.removeEventListener("unhandledrejection", handler);
+  }, []);
+
+  return (
+    <BrowserRouter>
+      {error && <ErrorToast message={error} onClose={() => setError(null)} />}
+      <nav className="flex items-center gap-4 border-b border-neutral-800 px-6 py-3 text-sm">
+        <Link to="/" className="font-bold text-lg">
+          🎤 ESC Vote
+        </Link>
+        <Link to="/" className="text-neutral-400 hover:text-white">
+          Rankings
+        </Link>
+        <Link to="/vote" className="text-neutral-400 hover:text-white">
+          Vote
+        </Link>
+        <Link to="/admin" className="text-neutral-400 hover:text-white">
+          Admin
+        </Link>
+        <span className="ml-auto flex items-center gap-4">
+          {activeRound && (
+            <span className="text-neutral-500">
+              {activeRound.year} — {formatRoundKind(activeRound.kind.tag)}
+            </span>
+          )}
+          <UserBadge />
+        </span>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/vote" element={<Vote />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<Admin />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
 function ErrorToast({
   message,
   onClose,
@@ -80,51 +126,5 @@ function UserBadge() {
     >
       {label} · Sign out
     </button>
-  );
-}
-
-export default function App() {
-  const [[activeRound]] = useTable(tables.get_active_round);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handler = (event: PromiseRejectionEvent) =>
-      setError(event.reason?.message ?? String(event.reason));
-    window.addEventListener("unhandledrejection", handler);
-    return () => window.removeEventListener("unhandledrejection", handler);
-  }, []);
-
-  return (
-    <BrowserRouter>
-      {error && <ErrorToast message={error} onClose={() => setError(null)} />}
-      <nav className="flex items-center gap-4 border-b border-neutral-800 px-6 py-3 text-sm">
-        <Link to="/" className="font-bold text-lg">
-          🎤 ESC Vote
-        </Link>
-        <Link to="/" className="text-neutral-400 hover:text-white">
-          Rankings
-        </Link>
-        <Link to="/vote" className="text-neutral-400 hover:text-white">
-          Vote
-        </Link>
-        <Link to="/admin" className="text-neutral-400 hover:text-white">
-          Admin
-        </Link>
-        <span className="ml-auto flex items-center gap-4">
-          {activeRound && (
-            <span className="text-neutral-500">
-              {activeRound.year} — {formatRoundKind(activeRound.kind.tag)}
-            </span>
-          )}
-          <UserBadge />
-        </span>
-      </nav>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/vote" element={<Vote />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
-    </BrowserRouter>
   );
 }
